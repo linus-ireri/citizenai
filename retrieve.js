@@ -8,7 +8,7 @@ async function main() {
   });
   const vectorStore = await HNSWLib.load("vector_store", embeddings);
 
-  // 2. Define a user query (replace with your own question)
+  // 2. Define a user query 
   const query = "What is this chatbot about?";
 
   // 3. Retrieve the top 3 most relevant chunks

@@ -11,6 +11,11 @@ html, body {
   overflow-x: hidden;
 }
 
+:root {
+  --vh: 1vh;
+  --keyboard-offset: 0px;
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #0a0f1c 0%, #1a1f2e 50%, #0d1421 100%);
@@ -163,7 +168,7 @@ header {
 /* App Container */
 .app-container {
   display: flex;
-  height: calc(100vh - 140px);
+  height: calc(var(--vh, 1vh) * 100 - 140px);
   height: calc(100dvh - 140px);
   max-width: 1400px;
   width: 100%;
@@ -451,7 +456,7 @@ header {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  margin-bottom: 80px; /* Ensure input bar does not overlap messages */
+  margin-bottom: calc(80px + var(--keyboard-offset, 0px)); /* Ensure input bar does not overlap messages */
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   overscroll-behavior: contain;
@@ -869,7 +874,7 @@ footer {
     flex: 1;
     overflow-y: auto;
     min-height: 0;
-    margin-bottom: 80px; /* Ensure input bar does not overlap messages */
+    margin-bottom: calc(80px + var(--keyboard-offset, 0px)); /* Ensure input bar does not overlap messages */
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     overscroll-behavior: contain;
@@ -879,7 +884,7 @@ footer {
     padding: 1rem;
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
     position: fixed;
-    bottom: 0;
+    bottom: var(--keyboard-offset, 0px);
     left: 0;
     right: 0;
     background: rgba(0, 0, 0, 0.98);
@@ -1038,7 +1043,7 @@ footer {
   #chat-form {
     padding: 0.75rem;
     position: fixed;
-    bottom: 0;
+    bottom: var(--keyboard-offset, 0px);
     left: 0;
     right: 0;
     background: rgba(0, 0, 0, 0.98);
@@ -1213,7 +1218,7 @@ footer {
     padding: 0.5rem;
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
     position: fixed;
-    bottom: 0;
+    bottom: var(--keyboard-offset, 0px);
     left: 0;
     right: 0;
     background: rgba(0, 0, 0, 0.98);

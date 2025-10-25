@@ -6,7 +6,7 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { HNSWLib } from "@langchain/community/vectorstores/hnswlib";
 import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/huggingface_transformers";
 
-// 1. List all your PDFs in the docs folder
+// 1. PDFs in the docs folder
 const pdfPaths = [
   // "./docs/CANONICAL_INTERVIEW (1).pdf",
   // "./docs/CHECK_IN__DOCUMENTATION (7).pdf",
@@ -19,7 +19,7 @@ const pdfPaths = [
   "./docs/myself_tech_journey.pdf"
 ];
 
-// Add URLs here if you want to ingest web pages
+// URLs to scrape
 const urls = [
   "https://lino-ai-co.netlify.app"
 ];
@@ -33,7 +33,7 @@ async function main() {
     pdfDocs.push(...docs);
   }
 
-  // 2. Load all URLs (if any)
+  // 2. Load all URLs
   const urlDocs = [];
   for (const url of urls) {
     const loader = new CheerioWebBaseLoader(url);

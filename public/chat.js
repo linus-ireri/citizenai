@@ -778,6 +778,66 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // VisualViewport-driven mobile keyboard handling
+  (function setupViewportVariables() {
+    if (typeof window === 'undefined') return;
+    const isMobile = () => window.innerWidth <= 768;
+    const root = document.documentElement;
+
+    const applyVH = () => {
+      const vh = window.visualViewport ? window.visualViewport.height * 0.01 : window.innerHeight * 0.01;
+      root.style.setProperty('--vh', `${vh}px`);
+    };
+
+    const applyKeyboardOffset = () => {
+      if (!isMobile()) {
+        root.style.setProperty('--keyboard-offset', '0px');
+        return;
+      }
+      const vv = window.visualViewport;
+      if (vv) {
+        const offset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        root.style.setProperty('--keyboard-offset', `${offset}px`);
+      }
+    };
+
+    const handleResize = () => {
+      applyVH();
+      applyKeyboardOffset();
+    };
+
+    // Initial set
+    applyVH();
+    applyKeyboardOffset();
+
+    // VisualViewport events
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      window.visualViewport.addEventListener('scroll', handleResize);
+    }
+
+    // Window resize fallback
+    window.addEventListener('resize', handleResize);
+
+    // Focus/blur on input to nudge layout
+    if (userInputElement) {
+      userInputElement.addEventListener('focus', () => {
+        setTimeout(() => {
+          applyKeyboardOffset();
+          // Ensure input is visible when focusing
+          userInputElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 50);
+      });
+      userInputElement.addEventListener('blur', () => {
+        // Reset offset a bit after blur to allow keyboard to hide
+        setTimeout(() => {
+          root.style.setProperty('--keyboard-offset', '0px');
+          applyVH();
+        }, 150);
+      });
+    }
+  })();
+
   // Initialize the app
   initializeUI();
   

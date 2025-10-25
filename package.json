@@ -2,8 +2,9 @@
   "type": "module",
   "name": "ai-chatbot",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "rag-server.js",
   "scripts": {
+    "start": "node rag-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -31,5 +32,9 @@
   },
   "devDependencies": {
     "ngrok": "^5.0.0-beta.2"
+  }
+
+,  "engines": {
+    "node": "18.x"
   }
 }
