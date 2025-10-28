@@ -93,6 +93,58 @@ app.post('/rag', async (req, res) => {
   }
 });
 
+// Provide a compatible /ask endpoint expected by Netlify functions
+app.post('/ask', async (req, res) => {
+  const question = req.body.question;
+  if (!question || typeof question !== 'string') {
+    return res.status(400).json({ error: 'Missing or invalid question' });
+  }
+  try {
+    const results = await vectorStore.similaritySearch(question, 3);
+    const context = results.map((doc, i) => `Context #${i + 1}:\n${doc.pageContent}`);
+
+    const systemPrompt = `You are Huduma, an AI assistant specializing in Kenyan legislation and policy. You must:
+1. Only answer based on the provided context
+2. If the context doesn't contain relevant information, say "I don't have enough information to answer that question"
+3. Be clear and precise in your responses
+4. When citing legislation, mention the specific act or bill name
+5. Do not make up or infer information not present in the context`;
+
+    const prompt = `Use the following context to answer the user's question accurately:\n\n${context.join("\n\n")}\n\nUser question: ${question}\n\nAnswer:`;
+
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'OPENROUTER_API_KEY not set in environment' });
+    }
+    const messages = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: prompt }
+    ];
+
+    let answer = "";
+    try {
+      const response = await axios.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        { model: "mistralai/mistral-small-3.2-24b-instruct:free", messages },
+        {
+          headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          timeout: 20000
+        }
+      );
+      answer = response.data.choices?.[0]?.message?.content || "[No answer returned]";
+    } catch (llmErr) {
+      console.error('OpenRouter LLM error:', llmErr.response?.data || llmErr.message);
+      return res.status(500).json({ error: 'LLM call failed', details: llmErr.response?.data || llmErr.message });
+    }
+
+    // Align with Netlify functions expectations: { answer, context }
+    res.json({ context, answer });
+  } catch (err) {
+    console.error('RAG error:', err);
+    res.status(500).json({ error: 'RAG retrieval failed' });
+  }
+});
+
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 loadRAG().then(() => {

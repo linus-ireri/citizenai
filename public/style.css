@@ -5,6 +5,15 @@
   box-sizing: border-box;
 }
 
+/* Loading indicator styles */
+.loading-indicator-hidden {
+  display: none;
+}
+
+.loading-indicator-visible {
+  display: flex;
+}
+
 html, body {
   width: 100vw;
   max-width: 100vw;

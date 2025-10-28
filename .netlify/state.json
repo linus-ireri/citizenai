@@ -1,5 +1,4 @@
 {
-	"siteId": "210f907d-052a-467e-9c91-0130453eb021",
 	"geolocation": {
 		"data": {
 			"city": "Nairobi",
@@ -16,5 +15,6 @@
 			"longitude": 36.8155
 		},
 		"timestamp": 1749933463719
-	}
+	},
+	"siteId": "815d099e-fb2b-40d1-a0a9-ff6dd0ada990"
 }
