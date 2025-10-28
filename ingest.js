@@ -5,67 +5,129 @@ import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { HNSWLib } from "@langchain/community/vectorstores/hnswlib";
 import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/huggingface_transformers";
+import fs from "fs";
+import path from "path";
 
-// 1. PDFs in the docs folder
+// PDF paths
 const pdfPaths = [
-  // "./docs/CANONICAL_INTERVIEW (1).pdf",
-  // "./docs/CHECK_IN__DOCUMENTATION (7).pdf",
-  // "./docs/LinoE_Book_ (2).pdf",
-  "./docs/creating_an_a_genertive_chatbox_chatbase.pdf",
-  "./docs/linoInfo_on_chatbox (1).pdf",
-  // "./docs/Email_Quotes_Agent.pdf",
-  "./docs/lino_ai_co_pdf (2).pdf",
-  "./docs/how_local_host_an_LLM.pdf",
-  "./docs/myself_tech_journey.pdf"
+  "./docs/ComputerMisuseandCybercrimesActNo5of2018.pdf",
+  "./docs/THE COMPUTER MISUSE AND CYBERCRIME (AMENDMENT) BILL,2024.pdf",
+  "./docs/Privatization Act (1) 2025.pdf",
+  "./docs/The Privatisation Bill, 2023.pdf"
 ];
 
 // URLs to scrape
 const urls = [
-  "https://lino-ai-co.netlify.app"
+  "https://www.kra.go.ke/en/helping-taxpayers/faqs"
 ];
 
-async function main() {
-  // 1. Load all PDFs
-  const pdfDocs = [];
-  for (const path of pdfPaths) {
-    const loader = new PDFLoader(path);
-    const docs = await loader.load();
-    pdfDocs.push(...docs);
-  }
+const VECTOR_STORE_PATH = "./vector_store";
 
-  // 2. Load all URLs
-  const urlDocs = [];
+async function loadPDFs() {
+  console.log("📄 Loading PDFs...");
+  const docs = [];
+  
+  for (const pdfPath of pdfPaths) {
+    try {
+      if (!fs.existsSync(pdfPath)) {
+        console.warn(`⚠️  Skipping missing file: ${pdfPath}`);
+        continue;
+      }
+      
+      console.log(`  Loading: ${path.basename(pdfPath)}`);
+      const loader = new PDFLoader(pdfPath);
+      const pdfDocs = await loader.load();
+      docs.push(...pdfDocs);
+      console.log(`  ✓ Loaded ${pdfDocs.length} pages`);
+    } catch (error) {
+      console.error(`  ✗ Error loading ${pdfPath}:`, error.message);
+    }
+  }
+  
+  return docs;
+}
+
+async function loadURLs() {
+  console.log("\n🌐 Loading URLs...");
+  const docs = [];
+  
   for (const url of urls) {
-    const loader = new CheerioWebBaseLoader(url);
-    const docs = await loader.load();
-    urlDocs.push(...docs);
+    try {
+      console.log(`  Scraping: ${url}`);
+      const loader = new CheerioWebBaseLoader(url);
+      const urlDocs = await loader.load();
+      docs.push(...urlDocs);
+      console.log(`  ✓ Loaded ${urlDocs.length} documents`);
+    } catch (error) {
+      console.error(`  ✗ Error loading ${url}:`, error.message);
+    }
   }
+  
+  return docs;
+}
 
-  // 3. Combine all docs
+async function main() {
+  console.log("🚀 Starting RAG ingestion pipeline...\n");
+  
+  // 1. Load documents
+  const pdfDocs = await loadPDFs();
+  const urlDocs = await loadURLs();
   const allDocs = [...pdfDocs, ...urlDocs];
-
-  // 4. Split into chunks
-  const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 200 });
+  
+  if (allDocs.length === 0) {
+    console.error("❌ No documents loaded. Exiting.");
+    process.exit(1);
+  }
+  
+  console.log(`\n📊 Total documents loaded: ${allDocs.length}`);
+  
+  // 2. Split into chunks
+  console.log("\n✂️  Splitting documents into chunks...");
+  const splitter = new RecursiveCharacterTextSplitter({ 
+    chunkSize: 1000, 
+    chunkOverlap: 200 
+  });
   const splitDocs = await splitter.splitDocuments(allDocs);
-
-  // 5. Use local HuggingFace embedding model
+  console.log(`  ✓ Created ${splitDocs.length} chunks`);
+  
+  // 3. Initialize embeddings model
+  console.log("\n🤖 Loading embedding model (this may take a moment)...");
   const embeddings = new HuggingFaceTransformersEmbeddings({
     modelName: "Xenova/all-MiniLM-L6-v2"
   });
-
-  // 6. Store in HNSWLib
+  console.log("  ✓ Embedding model loaded");
+  
+  // 4. Create vector store
+  console.log("\n🔢 Creating embeddings and building vector store...");
+  console.log("  (This will take several minutes for large documents)");
+  
   const vectorStore = await HNSWLib.fromDocuments(
     splitDocs,
     embeddings
   );
-
-  // Persist the vector store to disk
-  await vectorStore.save("vector_store");
-
-  console.log("Ingestion complete!");
+  
+  // 5. Save to disk
+  console.log("\n💾 Saving vector store to disk...");
+  
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(VECTOR_STORE_PATH)) {
+    fs.mkdirSync(VECTOR_STORE_PATH, { recursive: true });
+  }
+  
+  await vectorStore.save(VECTOR_STORE_PATH);
+  console.log(`  ✓ Vector store saved to: ${VECTOR_STORE_PATH}`);
+  
+  // 6. Print summary
+  console.log("\n✅ Ingestion complete!");
+  console.log("\n📈 Summary:");
+  console.log(`  - PDFs processed: ${pdfPaths.length}`);
+  console.log(`  - URLs scraped: ${urls.length}`);
+  console.log(`  - Total chunks: ${splitDocs.length}`);
+  console.log(`  - Vector store location: ${VECTOR_STORE_PATH}`);
 }
 
 main().catch(err => {
+  console.error("\n❌ Ingestion failed:");
   console.error(err);
   process.exit(1);
 });

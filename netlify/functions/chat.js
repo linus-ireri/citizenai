@@ -30,7 +30,7 @@ export async function handler(event) {
     let response;
 
     for (let i = 0; i < retries; i++) {
-          response = await fetch(process.env.VPS_API_URL || "http://localhost:3001/api/chat", {
+          response = await fetch(process.env.RAG_SERVER_URL || "http://localhost:3001/rag", {
       method: "POST",
       headers: {
         "x-api-key": process.env.VPS_API_KEY,
@@ -38,8 +38,14 @@ export async function handler(event) {
       },
       body: JSON.stringify({
         message: userMessage,
-        model: "llama3.2:3b",
-        systemPrompt: "You are a helpful AI assistant built by Ireri Linus Mugendi, the mind behind Lino.ai. Keep responses concise and natural."
+        model: "mistralai/mistral-small-3.2-24b-instruct:free",
+        systemPrompt: `You are Huduma, an AI assistant specializing in Kenyan legislation and policy information. Your responses must:
+1. Be based ONLY on the retrieved context provided
+2. Cite specific acts, bills, or policies when they are referenced
+3. Say "I don't have enough information about that in my knowledge base" if the context doesn't contain relevant information
+4. Be clear and precise, avoiding speculation or inference
+5. Focus solely on legislative and policy information
+Never identify yourself as an AI model or mention any model providers. Maintain a professional, informative tone.`
       }),
       signal: AbortSignal.timeout(7000) // 7 second timeout to stay within Netlify limits
     });
@@ -62,19 +68,19 @@ export async function handler(event) {
       if (response.status === 429 || response.status === 402) {
         // Simple local responses when API limit is hit
         const localResponses = {
-          "hello": "Hello! I'm Lino.AI, your friendly AI assistant. I'm currently in offline mode due to high user traffic, but I'm still here to chat! 😊",
-          "how are you": "I'm doing well, thank you for asking! I'm currently running in offline mode, but I'm still happy to help where I can.",
-          "what can you do": "I'm an AI assistant built by Ireri Linus Mugendi. I can help with conversations, answer questions, and provide assistance. Right now I'm in offline mode due to high user traffic.",
-          "who created you": "I was proudly built by Ireri Linus Mugendi — the mind behind Lino.ai! 🛠️",
-          "help": "I'm here to help! I can chat, answer questions, and assist you. Currently running in offline mode due to high user traffic, but I'm still functional.",
-          "bye": "Goodbye! It was nice chatting with you. Have a great day! 👋",
-          "thanks": "You're welcome! I'm glad I could help. 😊",
-          "thank you": "You're very welcome! It's my pleasure to assist you."
+          "hello": "Hello! I am Huduma, your legislative information assistant. I'm currently in offline mode due to high traffic, but I can still help with general questions about Kenyan legislation.",
+          "how are you": "I'm here to help you with questions about Kenyan legislation and policy. Currently in offline mode, but I can still provide general guidance.",
+          "what can you do": "I am Huduma, an AI assistant specializing in Kenyan legislation and policy information. I can help you understand various acts, bills, and policies. Currently in offline mode due to high traffic.",
+          "who are you": "I am Huduma, an AI assistant specializing in Kenyan legislation and policy information. How can I assist you today?",
+          "help": "I can help you understand Kenyan legislation and policies. While I'm currently in offline mode, feel free to ask about specific acts or bills.",
+          "bye": "Goodbye! If you have more questions about Kenyan legislation later, feel free to return. Have a great day!",
+          "thanks": "You're welcome! I'm here to help with any questions about Kenyan legislation and policy.",
+          "thank you": "You're welcome! Feel free to return if you have more questions about Kenyan legislation and policy."
         };
         
         // Check for simple keywords in the user message
         const lowerMessage = userMessage.toLowerCase();
-        let localReply = "I'm currently in offline mode due to high user traffic, but I'm still here to chat! Feel free to ask me anything, and I'll do my best to help. 😊";
+        let localReply = "I am currently in offline mode due to high traffic. While I can't access my full knowledge base at the moment, I can still provide general guidance about Kenyan legislation and policy. Please try again shortly for more detailed information.";
         
         for (const [keyword, response] of Object.entries(localResponses)) {
           if (lowerMessage.includes(keyword)) {
@@ -106,7 +112,7 @@ export async function handler(event) {
     console.log("Full AI Response:", data);
 
     const rawReply = data?.response?.trim();
-    const cleanedReply = rawReply || "I'm here to chat! Ask me anything.";
+    const cleanedReply = rawReply || "I am Huduma, your legislative information assistant. How can I help you understand Kenyan legislation and policy today?";
 
     return {
       statusCode: 200,

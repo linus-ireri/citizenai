@@ -1,13 +1,13 @@
-functionsDirectory = "C:\\Users\\user\\OneDrive\\Desktop\\lino.AI chatbot\\ai-chatbot\\netlify\\functions"
+functionsDirectory = "C:\\Users\\user\\OneDrive\\Desktop\\citizenai-chatbot\\citizenai\\netlify\\functions"
 functionsDirectoryOrigin = "config-v1"
 redirectsOrigin = "config"
 plugins = []
 headers = []
 
 [build]
-publish = "C:\\Users\\user\\OneDrive\\Desktop\\lino.AI chatbot\\ai-chatbot\\public"
+publish = "C:\\Users\\user\\OneDrive\\Desktop\\citizenai-chatbot\\citizenai\\public"
 publishOrigin = "config"
-functions = "C:\\Users\\user\\OneDrive\\Desktop\\lino.AI chatbot\\ai-chatbot\\netlify\\functions"
+functions = "C:\\Users\\user\\OneDrive\\Desktop\\citizenai-chatbot\\citizenai\\netlify\\functions"
 
 [build.environment]
 

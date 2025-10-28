@@ -1,43 +1,24 @@
 const axios = require('axios');
 
 const greetingResponses = {
-  "who are you": "I'm Lino.AI assistant. How can I help you?",
-  "who are you?": "I'm Lino.AI assistant. How can I help you?",
-  "hello": "Hello! I'm Lino.AI assistant. How can I help you?",
-  "hi": "Hi there! I'm Lino.AI assistant. How can I help you?",
-  "hey": "Hey! I'm Lino.AI assistant. How can I help you?",
-  "how are you": "I'm doing great, thanks for asking! I'm Lino.AI assistant. How can I help you?",
-  "how are you?": "I'm doing great, thanks for asking! I'm Lino.AI assistant. How can I help you?",
-  "good morning": "Good morning! I'm Lino.AI assistant. How can I help you?",
-  "good afternoon": "Good afternoon! I'm Lino.AI assistant. How can I help you?",
-  "good evening": "Good evening! I'm Lino.AI assistant. How can I help you?"
+  "who are you": "I am Huduma, an AI assistant specializing in Kenyan legislation and policy information. How can I assist you today?",
+  "who are you?": "I am Huduma, an AI assistant specializing in Kenyan legislation and policy information. How can I assist you today?",
+  "hello": "Hello! I am Huduma, your legislative information assistant. How can I help you?",
+  "hi": "Hi there! I am Huduma, your legislative information assistant. How can I help you?",
+  "hey": "Hello! I am Huduma, your legislative information assistant. How can I help you?",
+  "how are you": "I'm here to help you with questions about Kenyan legislation and policy. What would you like to know?",
+  "how are you?": "I'm here to help you with questions about Kenyan legislation and policy. What would you like to know?",
+  "good morning": "Good morning! I am Huduma, your legislative information assistant. How can I help you?",
+  "good afternoon": "Good afternoon! I am Huduma, your legislative information assistant. How can I help you?",
+  "good evening": "Good evening! I am Huduma, your legislative information assistant. How can I help you?"
 };
 
-const linoAIResponses = {
-  "what is lino.ai": "Lino.AI is a technology company led by Ireri Linus Mugendi, specializing in chatbot engineering, AI integration, LLM hosting, fine-tuning, and Retrieval-Augmented Generation (RAG) implementation.",
-  "what does lino.ai do": "Lino.AI specializes in chatbot engineering, AI integration, LLM hosting, fine-tuning, Retrieval-Augmented Generation (RAG) implementation using graph knowledge vector databases, website creation, and all aspects of software engineering.",
-  "who is lino.ai": "Lino.AI is led by Ireri Linus Mugendi and specializes in AI and software engineering services.",
-  "who is ireri linus mugendi": "Ireri Linus Mugendi is the leader of Lino.AI, specializing in AI and software engineering.",
-  "contact lino.ai": "You can contact Lino.AI at lino.ai.bot@gmail.com or visit our website at https://lino-ai-co.netlify.app",
-  "lino.ai contact": "You can contact Lino.AI at lino.ai.bot@gmail.com or visit our website at https://lino-ai-co.netlify.app",
-  "lino.ai services": "Lino.AI offers chatbot engineering, AI integration, LLM hosting, fine-tuning, RAG implementation, website creation, and software engineering services.",
-  "lino.ai website": "Visit Lino.AI at https://lino-ai-co.netlify.app",
-  "lino.ai email": "Contact Lino.AI at hello.linoai@gmail.com",
-  "where did linus school": "Linus attended Lenana School for high school, graduating with an A in mathematics, and is currently pursuing a Bachelor's degree in Mathematics and Computer Science at JKUAT (Jomo Kenyatta University of Agriculture and Technology).",
-  "where did linus study": "Linus attended Lenana School and is now at JKUAT studying Mathematics and Computer Science.",
-  "where did linus go to school": "Linus went to Lenana School for high school and is currently at JKUAT for university.",
-  "what did linus study": "Linus is pursuing a Bachelor's degree in Mathematics and Computer Science at JKUAT.",
-  "who is linus": "Linus is a mathematician and AI architect, currently studying at JKUAT and building software solutions.",
-  "is linus a mathematician": "Yes, Linus is a mathematician and an AI architect.",
-  "which high school did linus attend": "Linus attended Lenana School and graduated with an A in mathematics.",
-  "what is linus's background": "Linus is a mathematician and AI architect, currently at JKUAT, and a Lenana School alumnus with an A in mathematics.",
-  "was linus a club chairman": "Yes, Linus was the chairman of the Mathematics Club from 2021 to 2023.",
-  "what clubs did linus lead": "Linus was the chairman of the Mathematics Club from 2021 to 2023, and is currently the lead of the Data Science and Cloud Computing team at JKUAT.",
-  "what is linus's role in jkuat": "Linus is the lead of the Data Science and Cloud Computing team at JKUAT.",
-  "what is lino ai's history": "Linus began Lino AI in 2024, but officially decided to implement it in 2025.",
-  "when was lino ai started": "Lino AI was started by Linus in 2024, with official implementation beginning in 2025.",
-  "who leads data science at jkuat": "Linus is the lead of the Data Science and Cloud Computing team at JKUAT.",
-  "who was mathematics club chairman": "Linus was the chairman of the Mathematics Club in Lenana School from 2021 to 2023."
+// Common legislative queries - basic info only, detailed answers come from RAG
+const commonQueries = {
+  "what do you do": "I assist with questions about Kenyan legislation and policy, including information about various acts and bills.",
+  "how can you help": "I can provide information about Kenyan laws, policies, and legislative documents. Feel free to ask about specific acts or bills.",
+  "what information do you have": "I have information about various Kenyan laws and policies, including the Computer Misuse and Cybercrimes Act and the Privatization Act.",
+  "help": "I can help you understand Kenyan legislation and policies. Just ask about a specific law, act, or policy you'd like to learn about."
 };
 
 exports.handler = async function(event, context) {
@@ -146,16 +127,22 @@ async function processMessage(message, from) {
       { timeout: 1000 } // 1 second timeout for health check
     );
   } catch (healthError) {
-    // If health check fails, always call LLM with ALL official info as context for reasoning
+    // If health check fails, use basic greeting responses
     const allFaqs = [
       ...Object.values(greetingResponses),
-      ...Object.values(linoAIResponses)
+      ...Object.values(commonQueries)
     ].join(" ");
     try {
       if (!process.env.OPENROUTER_API_KEY) {
         throw new Error("OPENROUTER_API_KEY not set in environment");
       }
-      const systemPrompt = `You are Lino.AI Assistant. Only identify yourself as Lino.AI Assistant if the user explicitly asks who you are or similar. Never say you are a language model, AI model, or mention Mistral or any other provider. Never say you were created by Mistral or anyone else. You must answer using ONLY the official information provided below. Do not speculate, do not introduce yourself, do not use general knowledge, and do not say you don't know if the information is present. If the information is not present, say you do not have official information. Always try to follow up on the current conversation and maintain context if possible.`;
+      const systemPrompt = `You are Huduma, an AI assistant specializing in Kenyan legislation and policy information. Your responses must:
+1. Be based ONLY on the retrieved context provided
+2. Cite specific acts, bills, or policies when they are referenced
+3. Say "I don't have enough information about that in my knowledge base" if the context doesn't contain relevant information
+4. Be clear and precise, avoiding speculation or inference
+5. Focus solely on legislative and policy information
+Never identify yourself as an AI model or mention any model providers. Maintain a professional, informative tone.`;
       const messages = [
         { role: "system", content: systemPrompt },
         { role: "user", content: `Official information: ${allFaqs}` },
@@ -207,7 +194,13 @@ async function processMessage(message, from) {
         if (!process.env.OPENROUTER_API_KEY) {
           throw new Error("OPENROUTER_API_KEY not set in environment");
         }
-        const systemPrompt = `You are Lino.AI Assistant. Only identify yourself as Lino.AI Assistant if the user explicitly asks who you are or similar. Never say you are a language model, AI model, or mention Mistral or any other provider. Never say you were created by Mistral or anyone else. You must answer using ONLY the retrieved context provided below. Do not speculate, do not introduce yourself, do not use general knowledge, and do not say you don't know if the information is present. If the information is not present, say you do not have official information. Always try to follow up on the current conversation and maintain context if possible.`;
+        const systemPrompt = `You are Huduma, an AI assistant specializing in Kenyan legislation and policy information. Your responses must:
+1. Be based ONLY on the retrieved context provided
+2. Cite specific acts, bills, or policies when they are referenced
+3. Say "I don't have enough information about that in my knowledge base" if the context doesn't contain relevant information
+4. Be clear and precise, avoiding speculation or inference
+5. Focus solely on legislative and policy information
+Never identify yourself as an AI model or mention any model providers. Maintain a professional, informative tone.`;
         const messages = [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Retrieved context: ${Array.isArray(retrievedContext) ? retrievedContext.join(" ") : retrievedContext}` },
@@ -273,7 +266,11 @@ async function processMessage(message, from) {
       if (!process.env.OPENROUTER_API_KEY) {
         throw new Error("OPENROUTER_API_KEY not set in environment");
       }
-      const systemPrompt = `You are Lino.AI Assistant. Only identify yourself as Lino.AI Assistant if the user explicitly asks who you are or similar. Never say you are a language model, AI model, or mention Mistral or any other provider. Never say you were created by Mistral or anyone else. You must answer using ONLY the retrieved context provided below. Do not speculate, do not introduce yourself, do not use general knowledge, and do not say you don't know if the information is present. If the information is not present, say you do not have official information. Always try to follow up on the current conversation and maintain context if possible.`;
+      const systemPrompt = `You are Huduma, an AI assistant specializing in Kenyan legislation and policy information. Since no context is available for this query:
+1. Politely explain that you can only provide information about legislation and policy that is in your knowledge base
+2. Suggest that the user try rephrasing their question to focus on specific acts, bills, or policies
+3. Maintain a professional, helpful tone
+Never identify yourself as an AI model or mention any model providers.`;
       const messages = [
         { role: "system", content: systemPrompt },
         { role: "user", content: message }

@@ -22,7 +22,7 @@ app.use(express.json({ limit: '10kb' }));
 // Rate limiting (DoS protection)
 const limiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 5, // limit each IP to 5 requests per minute
+  max: 20, // limit each IP to 20 requests per minute for testing
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -46,15 +46,23 @@ app.post('/rag', async (req, res) => {
   try {
     const results = await vectorStore.similaritySearch(question, 3);
     const context = results.map((doc, i) => `Context #${i + 1}:\n${doc.pageContent}`);
-    const prompt = `You are an AI assistant. Use the following context to answer the user's question.\n\n${context.join("\n\n")}\n\nUser question: ${question}\n\nAnswer:`;
+    const systemPrompt = `You are Huduma, an AI assistant specializing in Kenyan legislation and policy. You must:
+1. Only answer based on the provided context
+2. If the context doesn't contain relevant information, say "I don't have enough information to answer that question"
+3. Be clear and precise in your responses
+4. When citing legislation, mention the specific act or bill name
+5. Do not make up or infer information not present in the context`;
+    
+    const prompt = `Use the following context to answer the user's question accurately:\n\n${context.join("\n\n")}\n\nUser question: ${question}\n\nAnswer:`;
 
     // LLM call
     const apiKey = process.env.OPENROUTER_API_KEY;
+    console.log("OPENROUTER_API_KEY:", process.env.OPENROUTER_API_KEY);
     if (!apiKey) {
       return res.status(500).json({ error: 'OPENROUTER_API_KEY not set in environment' });
     }
     const messages = [
-      { role: "system", content: "You are a helpful AI assistant." },
+      { role: "system", content: systemPrompt },
       { role: "user", content: prompt }
     ];
     let answer = "";
@@ -94,4 +102,4 @@ loadRAG().then(() => {
 }).catch(err => {
   console.error('Failed to load RAG:', err);
   process.exit(1);
-}); 
+});
